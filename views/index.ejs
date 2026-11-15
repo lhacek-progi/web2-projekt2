@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WEB2 - Projekt 2</title>
+  <style>
+    :root { --line: #ddd; --muted: #666; --ink: #1a1a1a; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, Arial, sans-serif;
+      font-size: 15px; line-height: 1.55; color: var(--ink);
+      max-width: 680px; margin: 0 auto; padding: 40px 24px 80px;
+    }
+    h1 { font-size: 1.3rem; font-weight: 600; margin: 0 0 4px; }
+    h2 { font-size: 1rem; font-weight: 600; margin: 0 0 14px; }
+    .sub { color: var(--muted); margin: 0 0 32px; }
+    section { border-top: 1px solid var(--line); padding: 26px 0; }
+    .account { color: var(--muted); font-size: 0.92rem; }
+    .account strong { color: var(--ink); }
+    .state { font-weight: 500; }
+    .state.on { color: #c0392b; }
+    .state.off { color: #1a7f37; }
+    label.toggle { display: inline-flex; align-items: center; gap: 7px; margin: 10px 0 16px; cursor: pointer; }
+    p.desc { color: var(--muted); font-size: 0.92rem; margin: 0 0 14px; }
+    input[type=text] { padding: 7px 9px; border: 1px solid #bbb; min-width: 240px; font: inherit; }
+    button, input[type=submit] { padding: 7px 14px; border: 1px solid var(--ink); background: var(--ink); color: #fff; cursor: pointer; font: inherit; }
+    button:hover, input[type=submit]:hover { background: #000; }
+    table { border-collapse: collapse; width: 100%; margin-top: 14px; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+    th { background: #f6f6f6; font-weight: 600; }
+    pre { background: #f6f6f6; border: 1px solid var(--line); padding: 11px 13px; overflow-x: auto; font-size: 0.85rem; margin: 10px 0 0; white-space: pre-wrap; }
+    .msg { border: 1px solid var(--line); border-left: 3px solid var(--ink); padding: 10px 14px; margin: 0 0 24px; font-size: 0.92rem; }
+    .msg.danger { border-left-color: #c0392b; color: #c0392b; }
+    .msg.ok { border-left-color: #1a7f37; color: #1a7f37; }
+    code { background: #f0f0f0; padding: 1px 5px; font-size: 0.88em; }
+    a { color: #0b5fff; }
+    .foot { margin-top: 40px; color: #999; font-size: 0.82rem; }
+  </style>
+
+
+</head>
+<body>
+  <h1>Napredni web; Labos 2</h1>
+  <p class="sub">Demonstracija ranjivosti: SQL Injection i CSRF</p>
+
+  <% if (flash) { %>
+    <div class="msg <%= flash.type %>"><%= flash.text %></div>
+  <% } %>
+
+  <div class="account">
+    Prijavljeni racun: <strong><%= account.username %></strong><br>
+    e-mail: <strong><%= account.email %></strong>
+  </div>
+
+  <section>
+    <h2>1. SQL injection - <span class="state <%= config.sqli ? 'on' : 'off' %>"><%= config.sqli ? 'ranjivost ukljucena' : 'ranjivost iskljucena (sigurno)' %></span></h2>
+
+    <form method="post" action="/config/sqli">
+      <label class="toggle">
+        <input type="checkbox" name="enabled" <%= config.sqli ? 'checked' : '' %> onchange="this.form.submit()">
+        Ranjivost ukljucena
+      </label>
+    </form>
+
+    <p class="desc">
+      Pretraga poruka po autoru. Kad je ranjivost ukljucena, unos se nadovezuje direktno u SQL upit.
+      Napad (tautologija): probajte upisati <code>' OR '1'='1</code> i dohvate se sve poruke, ukljucujuci skrivene PIN-ove.
+    </p>
+
+    <form method="get" action="/search">
+      <input type="text" name="q" placeholder="autor (npr. admin)" value="">
+      <input type="submit" value="Pretrazi">
+    </form>
+
+    <% if (searched) { %>
+      <pre><%= sql %></pre>
+      <% if (messages.length === 0) { %>
+        <p class="desc" style="margin-top:12px;">Rezultat: 0 redaka.</p>
+      <% } else { %>
+        <table>
+          <tr><th>Autor</th><th>Poruka</th><th>PIN</th></tr>
+          <% messages.forEach(function(m){ %>
+            <tr><td><%= m.autor %></td><td><%= m.poruka %></td><td><%= m.pin %></td></tr>
+          <% }); %>
+        </table>
+      <% } %>
+    <% } %>
+  </section>
+
+  <section>
+    <h2>3. Cross-Site Request Forgery - <span class="state <%= config.csrf ? 'on' : 'off' %>"><%= config.csrf ? 'ranjivost ukljucena' : 'ranjivost iskljucena (sigurno)' %></span></h2>
+
+    <form method="post" action="/config/csrf">
+      <label class="toggle">
+        <input type="checkbox" name="enabled" <%= config.csrf ? 'checked' : '' %> onchange="this.form.submit()">
+        Ranjivost ukljucena
+      </label>
+    </form>
+
+    <p class="desc">
+      Promjena e-mail adrese racuna mijenja stanje. Kad je ranjivost ukljucena, posluzitelj prihvaca POST
+      samo na temelju session cookie-a (bez CSRF tokena), pa ga napadacka stranica moze krivotvoriti.
+      Kad je iskljucena, trazi se ispravan CSRF token iz sessiona.
+    </p>
+
+    <form method="post" action="/account/email">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="text" name="email" placeholder="novi e-mail" value="noviMail@fer.hr">
+      <input type="submit" value="Promijeni e-mail (legitimno)">
+    </form>
+
+    <p class="desc" style="margin-top:14px;">
+      <a href="/napad" target="_blank" rel="noopener">Otvorite simuliranu napadacku stranicu (/napad)</a> -
+      ona u pozadini salje krivotvoreni zahtjev za promjenu e-maila na <code>haker@zlo.com</code>.
+      Vratite se i osvjezite ovu stranicu da vidite ucinak.
+    </p>
+  </section>
+</body>
+</html>
